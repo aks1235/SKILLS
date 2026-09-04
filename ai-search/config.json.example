@@ -27,8 +27,8 @@
   "default_provider": "ai",
 
   "_comment_tavily": "=== Tavily 配置 ===",
-  "tavily_api_url": "https://tavily.ivanli.cc/api/tavily",
-  "tavily_api_key": "your-tavily-key-here",
+  "tavily_api_url": "https://api.tavily.com",
+  "tavily_api_key": "tvly-your-key-here",
   "tavily_search_depth": "advanced",
   "tavily_max_results": 8,
   "tavily_include_answer": true,
