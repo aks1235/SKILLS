@@ -1,11 +1,11 @@
 ---
 name: ai-search
-description: AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿权威来源 URL，--split 多维度拆分，exa 找论文/深度长文。当用户要求联网搜索、调研最新内容，或答案依赖训练截止后可能变化的信息（新闻、版本号、价格、最新实践）时使用。
+description: "AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿权威来源 URL，--split 多维度拆分，exa 找论文/深度长文。当用户要求联网搜索、调研最新内容，或答案依赖训练截止后可能变化的信息（新闻、版本号、价格、最新实践）时使用。"
 ---
 
 # AI Search Skill
 
-通过 `~/.claude/skills/ai-search/ai_search.py` 进行联网搜索。**默认策略: `ai+tavily` 双路并发 + `--split` 拆分,两路结果在输出里各占一段,互相补强。**
+通过 `ai_search.py` 脚本进行联网搜索。**默认策略: `ai+tavily` 双路并发 + `--split` 拆分,两路结果在输出里各占一段,互相补强。**
 
 | Provider | 角色 | 何时用 |
 |---------|------|--------|
@@ -13,15 +13,15 @@ description: AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿
 | `tavily` | 拿权威 URL、可信来源 | 专业搜索引擎,带链接和摘要,经 AI 整合后再返回 |
 | `exa` | 论文、博客、长文深度内容 | 神经搜索,适合"找一篇关于 X 的文章/论文"的场景 |
 
-**默认 `ai+tavily` 并发**: 一个负责回答,一个负责来源,Claude 在外层把两边的结论 + 链接融合给用户。
+**默认 `ai+tavily` 并发**: 一个负责回答,一个负责来源,Agent 在外层把两边的结论 + 链接融合给用户。
 
 ## 触发条件
 
-**核心原则: 凡是可能有"最新"信息的场景,一律先搜再答,不做"据我所知"的猜测。此外,AI 模型在回答时应自行判断: 当前问题是否涉及可能在训练数据截止后发生变化的信息? 如果是,主动调用此 skill。**
+**核心原则: 凡是可能有"最新"信息的场景,一律先搜再答,不做"据我所知"的猜测。此外,Agent 在回答时应自行判断: 当前问题是否涉及可能在训练数据截止后发生变化的信息? 如果是,主动调用此 skill。**
 
 ### 必须搜索的场景
 
-- **AI 自主判断**: 回答任何问题时,先评估答案是否依赖可能过期的知识(如版本号、API、价格、状态、新闻等)。只要存在不确定性,主动搜索而非凭训练记忆回答。
+- **Agent 自主判断**: 回答任何问题时,先评估答案是否依赖可能过期的知识(如版本号、API、价格、状态、新闻等)。只要存在不确定性,主动搜索而非凭训练记忆回答。
 - **用户显式调用 `/ai-search`**
 - **用户明确提到搜索、查询、调研、联网等关键词**
 - **时效性问题**: 新闻、动态、事件、股价、价格、版本号、发布日期
@@ -35,7 +35,6 @@ description: AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿
 - **需要多维度搜索的复杂查询**: 调研、对比、深度分析
 - **论文、技术文档、博客深度内容查找**: 用 `--provider exa`
 - **事实核查、找权威来源**
-- **用户显式调用 `/ai-search`**
 
 ### 反例
 
@@ -52,30 +51,32 @@ description: AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿
 
 ## 使用方式
 
+调用当前 skill 目录下的 `ai_search.py` 脚本（执行时可使用相对于当前技能目录的相对路径或将脚本加入 PATH）：
+
 ```bash
 # 默认推荐: ai+tavily 双路并发 + 拆分 (绝大多数场景)
-python3 ~/.claude/skills/ai-search/ai_search.py --split 4 "查询内容"
+python3 ai_search.py --split 4 "查询内容"
 
 # 等同于显式写法
-python3 ~/.claude/skills/ai-search/ai_search.py --provider ai+tavily --split 4 "查询内容"
+python3 ai_search.py --provider ai+tavily --split 4 "查询内容"
 
 # 极简单的单一事实题 — 不拆分,但仍走 ai+tavily 双路
-python3 ~/.claude/skills/ai-search/ai_search.py "Python 最新版本号"
+python3 ai_search.py "Python 最新版本号"
 
-# 三路全开 (深度调研场景)
-python3 ~/.claude/skills/ai-search/ai_search.py --provider ai+tavily+exa --split 5 "船舶推进器行业 2026 趋势"
+# 三路全开 (深度行业研究场景)
+python3 ai_search.py --provider ai+tavily+exa --split 5 "2026年新能源电池产业链技术趋势"
 
 # 只用单 provider (节省调用)
-python3 ~/.claude/skills/ai-search/ai_search.py --provider ai --split 4 "查询内容"
+python3 ai_search.py --provider ai --split 4 "查询内容"
 
 # 找论文/博客直接 exa
-python3 ~/.claude/skills/ai-search/ai_search.py --provider exa "查询内容"
+python3 ai_search.py --provider exa "查询内容"
 
 # JSON 格式输出 (便于解析)
-python3 ~/.claude/skills/ai-search/ai_search.py --json --split 4 "查询内容"
+python3 ai_search.py --json --split 4 "查询内容"
 
 # 从 stdin 读取查询
-echo "查询内容" | python3 ~/.claude/skills/ai-search/ai_search.py --read-stdin --split 4
+echo "查询内容" | python3 ai_search.py --read-stdin --split 4
 ```
 
 **provider 组合写法**: `--provider` 支持 `+` / `,` / 空格 任一分隔,如 `ai+tavily`、`ai,tavily`、`ai tavily` 都等价。重复的会自动去重。
@@ -88,12 +89,12 @@ echo "查询内容" | python3 ~/.claude/skills/ai-search/ai_search.py --read-std
 
 ### 拆分粒度速查表
 
-| 查询类型 | `--split` 值 | 例 |
+| 查询类型 | `--split` 值 | 范例 |
 |----------|-------------|-----|
-| 单一事实题 (一句话能问完) | 不加 `--split` | "Python 最新版本""今天北京天气" |
-| 普通信息查询 | `--split 3` | "OpenAI 最近发布了什么""React 19 有哪些新特性" |
-| 调研、对比、综合分析 | `--split 4~5` | "对比 Rust 和 Go 的并发模型""调研下国内做船舶推进器的厂商" |
-| 行业情报、深度研究 | `--split 5~6` | "船舶推进器行业 2026 年趋势" |
+| 单一事实题 (一句话能问完) | 不加 `--split` | "Python 最新版本"、"今天当地天气" |
+| 普通信息查询 | `--split 3` | "OpenAI 最近发布了什么"、"React 19 有哪些新特性" |
+| 调研、对比、综合分析 | `--split 4~5` | "对比 Rust 和 Go 的并发模型"、"调研主流云厂商最新算力优惠" |
+| 行业情报、深度研究 | `--split 5~6` | "2026年具身智能机器人行业发展趋势与痛点分析" |
 | 再多就分散了,不要超 6 | — | — |
 
 ### Provider 组合速查表
@@ -109,7 +110,7 @@ echo "查询内容" | python3 ~/.claude/skills/ai-search/ai_search.py --read-std
 
 ### 整合给用户
 
-`ai+tavily` 的输出分为 `# 来源: ai` 和 `# 来源: tavily` 两段。Claude 应:
+`ai+tavily` 的输出分为 `# 来源: ai` 和 `# 来源: tavily` 两段。Agent 应:
 - 用 ai 段作为主要事实/结论
 - 用 tavily 段补充可信 URL 和最新动态
 - 用自然语言融合成一份回答给用户,引用关键链接
@@ -160,7 +161,7 @@ echo "查询内容" | python3 ~/.claude/skills/ai-search/ai_search.py --read-std
 
 `default_provider` 支持组合写法(`ai+tavily`),也支持单 provider(`ai`)。
 
-**注意**:Tavily 和 Exa 的 API key 都通过它们的官方控制台获取(tavily.com、exa.ai)。AI 整合环节默认复用主 `api_url`/`api_key`/`analysis_model_id`;若想让搜索模型和整合模型分别走不同服务(比如搜索用 Grok,整合用 Claude),填上 `analysis_api_url`/`analysis_api_key` 即可。
+**注意**: Tavily 和 Exa 的 API key 都通过它们的官方控制台获取(tavily.com、exa.ai)。AI 整合环节默认复用主 `api_url`/`api_key`/`analysis_model_id`;若想让搜索模型和整合模型分别走不同服务(比如搜索用 Grok,整合用 Claude/Gemini),填上 `analysis_api_url`/`analysis_api_key` 即可。
 
 也支持环境变量:`AI_API_URL`、`AI_API_KEY`、`AI_ANALYSIS_API_URL`、`AI_ANALYSIS_API_KEY`、`TAVILY_API_KEY`、`EXA_API_KEY`、`AI_PROVIDER` 等。
 
@@ -179,6 +180,6 @@ echo "查询内容" | python3 ~/.claude/skills/ai-search/ai_search.py --read-std
 
 - **单 provider**: 直接返回 AI 整合后的 Markdown 回答;`--split` 时分多个 `### 子查询 N` 段
 - **多 provider 组合** (如 `ai+tavily`): 输出按 `# 来源: <provider>` 分段,中间用 `---` 分隔,各段独立完整
-- Claude 应:
+- Agent 应:
   - 多 provider 时把各段的结论 + URL 融合成自然语言回复,**不要直接 dump 各段原始 markdown**
   - 优先把关键 URL/事实核查后的结论转述给用户
