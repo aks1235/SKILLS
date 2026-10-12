@@ -1,6 +1,6 @@
 ---
 name: ai-search
-description: AI 联网搜索,默认 ai+tavily 双路并发(AI 模型联网搜索 + Tavily 拿权威 URL,互相补强),配合 --split 多维度拆分。Exa 用于找论文/博客深度内容。不仅当用户提到搜索、查询最新内容、调研、需要联网信息时务必使用,当 AI 模型判断回答当前问题需要最新知识或信息时,也应主动调用此 skill。默认用 ai+tavily 并发并加 --split 3~5。
+description: AI 联网搜索：ai+tavily 双路并发，一路出答案一路拿权威来源 URL，--split 多维度拆分，exa 找论文/深度长文。当用户要求联网搜索、调研最新内容，或答案依赖训练截止后可能变化的信息（新闻、版本号、价格、最新实践）时使用。
 ---
 
 # AI Search Skill
